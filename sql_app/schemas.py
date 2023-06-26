@@ -2,7 +2,7 @@ import datetime
 
 from pydantic import BaseModel
 
-from sql_app.models import ResultListStatusType
+from sql_app.models import ResultListStatusType, ResultListModeType, EventClassStatus, SexType
 
 
 class EventBase(BaseModel):
@@ -40,3 +40,17 @@ class ResultList(ResultListBase):
 
     class Config:
         orm_mode = True
+
+class EventClassBase(BaseModel):
+    name: str
+    short_name: str = None
+    sex: SexType
+    result_list_mode: ResultListModeType = ResultListModeType.DEFAULT
+    status: EventClassStatus = EventClassStatus.NORMAL
+    min_number_of_team_members: int = 1
+    max_number_of_team_members: int = 1
+    result_list: int
+
+
+class EventClassCreate(EventClassBase):
+    pass

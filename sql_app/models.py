@@ -1,7 +1,7 @@
 import enum
 
 from sqlalchemy import Column, Integer, String, Enum, ForeignKey, DateTime, Float, Double, Date
-from sqlalchemy.orm import relationship, mapped_column, DeclarativeBase
+from sqlalchemy.orm import mapped_column, DeclarativeBase
 
 
 # declarative base class
@@ -80,30 +80,67 @@ class ResultList(Base):
     create_time = mapped_column(DateTime)
     creator = mapped_column(String)
 
-    class_results = relationship("ClassResult", back_populates="result_list")
+    # class_results = relationship("ClassResult", back_populates="result_list")
 
 
-class ResultListModeType(Enum):
+class ResultListModeType(enum.Enum):
     DEFAULT = 'Default'  # The result list should include place and time for each competitor, and be ordered by place.
     UNORDERED = 'Unordered'  # The result list should include place and time for each competitor, but be unordered
     # with respect to times (e.g. sorted by competitor name).
     UNORDERED_NO_TIMES = 'UnorderedNoTimes'  # The result list should not include any places and times,
+
     # and be unordered with respect to times (e.g. sorted by competitor name).
 
+    @staticmethod
+    def get_enum_value(value_string: str):
+        if value_string == ResultListModeType.DEFAULT.value:
+            return ResultListModeType.DEFAULT
+        elif value_string == ResultListModeType.UNORDERED.value:
+            return ResultListModeType.UNORDERED
+        elif value_string == ResultListModeType.UNORDERED_NO_TIMES.value:
+            return ResultListModeType.UNORDERED_NO_TIMES
+        else:
+            raise ValueError('Invalid enum value: {}'.format(value_string))
 
-class SexType(Enum):
+
+class SexType(enum.Enum):
     F = 'F'
     M = 'M'
 
+    @staticmethod
+    def get_enum_value(value_string: str):
+        if value_string == SexType.F.value:
+            return SexType.F
+        elif value_string == SexType.M.value:
+            return SexType.M
+        else:
+            raise ValueError('Invalid enum value: {}'.format(value_string))
 
-class EventClassStatus(Enum):
+
+class EventClassStatus(enum.Enum):
     NORMAL = 'Normal'  # The default status.
     DIVIDED = 'Divided'  # The class has been divided in two or more classes due to a large number of entries.
     JOINED = 'Joined'  # The class has been joined with another class due to a small number of entries.
     INVALIDATED = 'Invalidated'  # The results are considered invalid due to technical issues such as misplaced
     # controls. Entry fees are not refunded.
     INVALIDATED_NO_FEE = 'InvalidatedNoFee'  # The results are considered invalid due to technical issues such as
+
     # misplaced controls. Entry fees are refunded.
+
+    @staticmethod
+    def get_enum_value(value_string: str):
+        if value_string == EventClassStatus.NORMAL.value:
+            return EventClassStatus.NORMAL
+        elif value_string == EventClassStatus.DIVIDED.value:
+            return EventClassStatus.DIVIDED
+        elif value_string == EventClassStatus.JOINED.value:
+            return EventClassStatus.JOINED
+        elif value_string == EventClassStatus.INVALIDATED.value:
+            return EventClassStatus.INVALIDATED
+        elif value_string == EventClassStatus.INVALIDATED_NO_FEE.value:
+            return EventClassStatus.INVALIDATED_NO_FEE
+        else:
+            raise ValueError('Invalid enum value: {}'.format(value_string))
 
 
 class EventClass(Base):
@@ -117,6 +154,7 @@ class EventClass(Base):
     sex = mapped_column(Enum(SexType))
     min_number_of_team_members = mapped_column(Integer, default=1)
     max_number_of_team_members = mapped_column(Integer, default=1)
+    result_list = mapped_column(Integer, ForeignKey("result_lists.id"))
 
 
 class Course(Base):
@@ -140,8 +178,6 @@ class ClassResult(Base):
     event_class = Column(Integer, ForeignKey("event_classes.id"))
     result_list = Column(Integer, ForeignKey("result_lists.id"))
 
-    result_list = relationship("ResultList", back_populates="class_results")
-
 
 class Person(Base):
     __tablename__ = "persons"
@@ -161,7 +197,7 @@ class PersonResult(Base):
     organisation = mapped_column(Integer, ForeignKey("organisations.id"), nullable=True)
 
 
-class ResultStatus(Enum):
+class ResultStatus(enum.Enum):
     OK = 'OK'  # Finished and validated.
     FINISHED = 'Finished'  # Finished but not yet validated.
     MISSING_PUNCH = 'MissingPunch'  # Missing punch.
@@ -194,7 +230,7 @@ class PersonRaceResult(Base):
     control_card = mapped_column(String, nullable=True)
 
 
-class SplitTimeStatusType(Enum):
+class SplitTimeStatusType(enum.Enum):
     OK = 'OK'  # Control belongs to the course and has been punched (either by electronical punching or pin
     # punching). If the time is not available or invalid, omit the Time element.
     MISSING = 'Missing'  # Control belongs to the course but has not been punched.

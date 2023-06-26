@@ -4,8 +4,8 @@ from typing import Optional
 from sqlalchemy.orm import Session
 
 from . import models, schemas
-from .models import Event, ResultList, ResultListStatusType
-from .schemas import EventCreate, ResultListCreate
+from .models import Event, ResultList, ResultListStatusType, EventClass, SexType, ResultListModeType, EventClassStatus
+from .schemas import EventCreate, ResultListCreate, EventClassCreate
 
 
 def get_event(db: Session, event_id: int) -> Optional[Event]:
@@ -70,3 +70,49 @@ def create_result_list(db: Session,
     db.commit()
     db.refresh(db_result_list)
     return db_result_list
+
+
+def get_event_class(db: Session, event_class_id: int) -> Optional[EventClass]:
+    return db.query(models.EventClass).filter(models.EventClass.id == event_class_id).first()
+
+
+def get_event_classes(db: Session, skip: int = 0, limit: int = 100):
+    return db.query(models.EventClass).offset(skip).limit(limit).all()
+
+
+def get_event_class_by_name(db: Session, result_list_id: int, name: str) -> Optional[EventClass]:
+    return db.query(models.EventClass).filter(models.EventClass.name == name and
+                                              models.EventClass.result_list_id == result_list_id).first()
+
+
+def find_or_create_event_class(db: Session,
+                               result_list_id: int,
+                               name: str, short_name: str,
+                               sex: SexType, result_list_mode: ResultListModeType,
+                               status: EventClassStatus,
+                               min_number_of_team_members: int,
+                               max_number_of_team_members: int
+                               ) -> \
+        Optional[EventClass]:
+    event_class = get_event_class_by_name(db, result_list_id, name)
+    if event_class:
+        return event_class
+    return create_event_class(db, EventClassCreate(
+        result_list=result_list_id,
+        name=name, short_name=short_name, sex=sex, result_list_mode=result_list_mode,
+        status=status, min_number_of_team_members=min_number_of_team_members,
+        max_number_of_team_members=max_number_of_team_members))
+
+
+def create_event_class(db: Session, event_class: schemas.EventClassCreate) -> EventClass:
+    db_event_class = models.EventClass(
+        result_list=event_class.result_list,
+        name=event_class.name, short_name=event_class.short_name,
+        status=event_class.status, sex=event_class.sex,
+        result_list_mode=event_class.result_list_mode,
+        min_number_of_team_members=event_class.min_number_of_team_members,
+        max_number_of_team_members=event_class.max_number_of_team_members)
+    db.add(db_event_class)
+    db.commit()
+    db.refresh(db_event_class)
+    return db_event_class
