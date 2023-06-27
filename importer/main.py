@@ -1,13 +1,23 @@
 import datetime
+from typing import Optional
 
 import lxml.etree as et
 import typer
 from sqlalchemy.orm import Session
 from xmlschema import XMLSchema
 
-from sql_app.crud import find_or_create_event, find_or_create_result_list, find_or_create_event_class
+from sql_app.crud import find_or_create_event, \
+    find_or_create_result_list, \
+    find_or_create_event_class, \
+    find_or_create_course
 from sql_app.database import SessionLocal
-from sql_app.models import Event, ResultList, ResultListStatusType, SexType, ResultListModeType, EventClassStatus
+from sql_app.models import Event, \
+    ResultList, \
+    ResultListStatusType, \
+    SexType, \
+    ResultListModeType, \
+    EventClassStatus, \
+    Course
 
 app = typer.Typer()
 
@@ -55,25 +65,44 @@ def import_event_class(data: dict, db: Session, result_list_id: int):
                                       )
 
 
-def import_course(data: dict, db: Session):
-    return None
+def import_courses(courses_dict: dict, db: Session, result_list_id: int, event_class_id: int):
+    courses = []
+    for data in courses_dict:
+        db_course: Optional[Course] = find_or_create_course(db=db,
+                                                            result_list_id=result_list_id,
+                                                            event_class_id=event_class_id,
+                                                            race_number=data[
+                                                                '@raceNumber'] if '@raceNumber' in data else 1,
+                                                            number_of_controls=data[
+                                                                'NumberOfControls'] if 'NumberOfControls' in data
+                                                            else None,
+                                                            name=data['Name'] if 'Name' in data else None,
+                                                            course_id=data['Id'] if 'Id' in data else None,
+                                                            course_family=data[
+                                                                'CourseFamily'] if 'CourseFamily' in data else None,
+                                                            length=data['Length'] if 'Lenght' in data else None,
+                                                            climb=data['Climb'] if 'Climb' in data else None
+                                                            )
+        courses.append(db_course)
+
+    return courses
 
 
 def import_person_race_results(
         data: dict,
         event_class,
-        course,
+        courses,
         db: Session):
     pass
 
 
 def import_class_result(data: dict, event: Event, result_list: ResultList, db: Session):
     event_class = import_event_class(data['Class'], db, result_list.id)
-    course = import_course(data['Course'], db)
+    courses = import_courses(data['Course'], db, result_list.id, event_class.id)
     import_person_race_results(
         data['PersonResult'],
         event_class,
-        course,
+        courses,
         db)
 
 

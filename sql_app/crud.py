@@ -4,8 +4,9 @@ from typing import Optional
 from sqlalchemy.orm import Session
 
 from . import models, schemas
-from .models import Event, ResultList, ResultListStatusType, EventClass, SexType, ResultListModeType, EventClassStatus
-from .schemas import EventCreate, ResultListCreate, EventClassCreate
+from .models import Event, ResultList, Course, ResultListStatusType, EventClass, SexType, ResultListModeType, \
+    EventClassStatus
+from .schemas import EventCreate, ResultListCreate, EventClassCreate, CourseCreate
 
 
 def get_event(db: Session, event_id: int) -> Optional[Event]:
@@ -82,7 +83,7 @@ def get_event_classes(db: Session, skip: int = 0, limit: int = 100):
 
 def get_event_class_by_name(db: Session, result_list_id: int, name: str) -> Optional[EventClass]:
     return db.query(models.EventClass).filter(models.EventClass.name == name and
-                                              models.EventClass.result_list_id == result_list_id).first()
+                                              models.EventClass.result_list == result_list_id).first()
 
 
 def find_or_create_event_class(db: Session,
@@ -116,3 +117,64 @@ def create_event_class(db: Session, event_class: schemas.EventClassCreate) -> Ev
     db.commit()
     db.refresh(db_event_class)
     return db_event_class
+
+
+def get_course(db: Session, course_id: int) -> Optional[Course]:
+    return db.query(models.Course).filter(models.Course.id == course_id).first()
+
+
+def get_courses(db: Session, skip: int = 0, limit: int = 100):
+    return db.query(models.Course).offset(skip).limit(limit).all()
+
+
+def get_course_by_race_number(db: Session, result_list_id: int, event_class_id: int, race_number: int) -> Optional[
+        Course]:
+    return db.query(models.Course).filter(models.Course.race_number == race_number,
+                                          models.Course.event_class == event_class_id,
+                                          models.Course.result_list == result_list_id).first()
+
+
+def find_or_create_course(db: Session,
+                          result_list_id: int,
+                          event_class_id: int,
+                          race_number: int,
+                          name: str,
+                          number_of_controls: int,
+                          course_id: str,
+                          course_family: str,
+                          length: float,
+                          climb: float
+                          ) -> \
+        Optional[Course]:
+    course = get_course_by_race_number(db, result_list_id, event_class_id, race_number)
+    if course:
+        return course
+    return create_course(db, CourseCreate(
+        result_list=result_list_id,
+        event_class=event_class_id,
+        race_number=race_number,
+        number_of_controls=number_of_controls,
+        name=name,
+        course_id=course_id,
+        course_family=course_family,
+        length=length,
+        climb=climb
+        ))
+
+
+def create_course(db: Session, course: schemas.CourseCreate) -> Course:
+    db_course = models.Course(
+        result_list=course.result_list,
+        event_class=course.event_class,
+        race_number=course.race_number,
+        number_of_controls=course.number_of_controls,
+        name=course.name,
+        course_id=course.course_id,
+        course_family=course.course_family,
+        length=course.length,
+        climb=course.climb
+        )
+    db.add(db_course)
+    db.commit()
+    db.refresh(db_course)
+    return db_course

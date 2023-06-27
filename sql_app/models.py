@@ -147,6 +147,7 @@ class EventClass(Base):
     __tablename__ = "event_classes"
 
     id = mapped_column(Integer, primary_key=True, index=True, nullable=True)
+    result_list = mapped_column(Integer, ForeignKey("result_lists.id"))
     name = mapped_column(String)
     short_name = mapped_column(String, nullable=True)
     result_list_mode = mapped_column(Enum(ResultListModeType))
@@ -154,20 +155,21 @@ class EventClass(Base):
     sex = mapped_column(Enum(SexType))
     min_number_of_team_members = mapped_column(Integer, default=1)
     max_number_of_team_members = mapped_column(Integer, default=1)
-    result_list = mapped_column(Integer, ForeignKey("result_lists.id"))
 
 
 class Course(Base):
     __tablename__ = "courses"
 
     id = mapped_column(Integer, primary_key=True, index=True)
+    result_list = mapped_column(Integer, ForeignKey("result_lists.id"))
+    event_class = mapped_column(Integer, ForeignKey("event_classes.id"))
+    race_number = mapped_column(Integer, default=1)
+    name = mapped_column(String, nullable=True)
     course_id = mapped_column(String, nullable=True)
     course_family = mapped_column(String, nullable=True)
-    name = mapped_column(String)
     length = mapped_column(Double, nullable=True)
     climb = mapped_column(Double, nullable=True)
-    number_of_controls = mapped_column(Integer)
-    class_result = Column(Integer, ForeignKey("class_results.id"))
+    number_of_controls = mapped_column(Integer, nullable=True)
 
 
 class ClassResult(Base):

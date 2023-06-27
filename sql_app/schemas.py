@@ -41,6 +41,7 @@ class ResultList(ResultListBase):
     class Config:
         orm_mode = True
 
+
 class EventClassBase(BaseModel):
     name: str
     short_name: str = None
@@ -53,4 +54,20 @@ class EventClassBase(BaseModel):
 
 
 class EventClassCreate(EventClassBase):
+    pass
+
+
+class CourseBase(BaseModel):
+    result_list: int
+    event_class: int
+    race_number: int = 1
+    number_of_controls: int = None
+    name: str = None
+    course_id: str = None
+    course_family: str = None
+    length: float = None
+    climb: float = None
+
+
+class CourseCreate(CourseBase):
     pass
